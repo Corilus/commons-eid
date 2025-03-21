@@ -1,7 +1,7 @@
 /*
  * Commons eID Project.
  * Copyright (C) 2008-2013 FedICT.
- * Copyright (C) 2015 e-Contract.be BVBA.
+ * Copyright (C) 2015-2024 e-Contract.be BV.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version
@@ -20,6 +20,9 @@
 package be.fedict.commons.eid.consumer;
 
 import java.io.Serializable;
+import java.time.Clock;
+import java.time.LocalDate;
+import java.time.Period;
 import java.util.GregorianCalendar;
 
 import be.fedict.commons.eid.consumer.tlv.ChipNumberDataConvertor;
@@ -33,6 +36,7 @@ import be.fedict.commons.eid.consumer.tlv.SpecialOrganisationConvertor;
 import be.fedict.commons.eid.consumer.tlv.SpecialStatusConvertor;
 import be.fedict.commons.eid.consumer.tlv.TlvField;
 import be.fedict.commons.eid.consumer.tlv.ValidityDateDataConvertor;
+import be.fedict.commons.eid.consumer.tlv.WorkPermitConvertor;
 
 /**
  * Holds all fields within the eID identity file. The annotations are used by
@@ -131,12 +135,44 @@ public class Identity implements Serializable {
 	@TlvField(21)
 	public String dateAndCountryOfProtection;
 
+	@TlvField(22)
+	@ConvertData(WorkPermitConvertor.class)
+	public WorkPermit workPermit;
+
+	@TlvField(23)
+	public String employerVATNumber1;
+
+	@TlvField(24)
+	public String employerVATNumber2;
+
+	@TlvField(25)
+	public String regionalFileNumber;
+
+	@TlvField(26)
+	public byte[] basicPublicKeyDigest;
+
+	@TlvField(27)
+	public String brexitMention1;
+
+	@TlvField(28)
+	public String brexitMention2;
+
+	@TlvField(29)
+	public String cardAMention1;
+
+	@TlvField(30)
+	public String cardAMention2;
+
+	@TlvField(31)
+	@ConvertData(ValidityDateDataConvertor.class)
+	public GregorianCalendar cardEUStartDate;
+
 	@OriginalData
 	public byte[] data;
 
 	/*
-	 * We're also providing getters and a toString to make this class more
-	 * useful within web frameworks like JBoss Seam.
+	 * We're also providing getters and a toString to make this class more useful
+	 * within web frameworks like JBoss Seam.
 	 */
 
 	public String getCardNumber() {
@@ -227,8 +263,77 @@ public class Identity implements Serializable {
 		return this.dateAndCountryOfProtection;
 	}
 
+	public WorkPermit getWorkPermit() {
+		return this.workPermit;
+	}
+
+	public String getEmployerVATNumber1() {
+		return this.employerVATNumber1;
+	}
+
+	public String getEmployerVATNumber2() {
+		return this.employerVATNumber2;
+	}
+
+	public String getRegionalFileNumber() {
+		return this.regionalFileNumber;
+	}
+
 	public byte[] getData() {
 		return this.data;
+	}
+
+	/**
+	 * Gives back the digest value of the basic public key. This field is available
+	 * on belpic applet version 1.8 eID cards.
+	 * 
+	 * @return
+	 */
+	public byte[] getBasicPublicKeyDigest() {
+		return this.basicPublicKeyDigest;
+	}
+
+	public String getBrexitMention1() {
+		return this.brexitMention1;
+	}
+
+	public String getBrexitMention2() {
+		return this.brexitMention2;
+	}
+
+	public String getCardAMention1() {
+		return this.cardAMention1;
+	}
+
+	public String getCardAMention2() {
+		return this.cardAMention2;
+	}
+
+	public GregorianCalendar getCardEUStartDate() {
+		return this.cardEUStartDate;
+	}
+
+	/**
+	 * Gives back the age of the person.
+	 * 
+	 * @return
+	 */
+	public int getAge() {
+		return getAge(null);
+	}
+
+	public int getAge(Clock clock) {
+		LocalDate dob = LocalDate.of(this.dateOfBirth.get(GregorianCalendar.YEAR),
+				this.dateOfBirth.get(GregorianCalendar.MONTH) + 1,
+				this.dateOfBirth.get(GregorianCalendar.DAY_OF_MONTH));
+		LocalDate now;
+		if (null == clock) {
+			now = LocalDate.now();
+		} else {
+			now = LocalDate.now(clock);
+		}
+		Period age = Period.between(dob, now);
+		return age.getYears();
 	}
 
 	@Override

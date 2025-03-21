@@ -1,7 +1,7 @@
 /*
  * Commons eID Project.
  * Copyright (C) 2008-2013 FedICT.
- * Copyright (C) 2014-2017 e-Contract.be BVBA.
+ * Copyright (C) 2014-2024 e-Contract.be BV.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version
@@ -19,8 +19,8 @@
 
 package test.integ.be.fedict.commons.eid.client;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -30,6 +30,7 @@ import java.math.BigInteger;
 import java.net.Socket;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.security.PrivateKey;
 import java.security.SecureRandom;
@@ -39,6 +40,9 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.RSAKeyGenParameterSpec;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.Locale;
 
 import javax.net.ssl.KeyManager;
@@ -63,32 +67,38 @@ import org.bouncycastle.asn1.x509.BasicConstraints;
 import org.bouncycastle.asn1.x509.Extension;
 import org.bouncycastle.asn1.x509.KeyUsage;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
+import org.bouncycastle.cert.CertIOException;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.X509v3CertificateBuilder;
 import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils;
 import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
 import org.bouncycastle.crypto.util.PrivateKeyFactory;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.DefaultDigestAlgorithmIdentifierFinder;
 import org.bouncycastle.operator.DefaultSignatureAlgorithmIdentifierFinder;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.bc.BcRSAContentSignerBuilder;
-import org.joda.time.DateTime;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import be.fedict.commons.eid.jca.BeIDManagerFactoryParameters;
 import be.fedict.commons.eid.jca.BeIDProvider;
+import be.fedict.commons.eid.jca.ssl.BeIDManagerFactoryParameters;
 
 public class SSLTest {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(SSLTest.class);
 
+	@BeforeAll
+	public static void setup() {
+		Security.insertProviderAt(new BeIDProvider(), 1);
+		Security.addProvider(new BouncyCastleProvider());
+	}
+
 	@Test
 	public void testTestEIDBelgiumBe() throws Exception {
-		Security.addProvider(new BeIDProvider());
-
 		SSLContext sslContext = SSLContext.getInstance("TLS");
 		KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("BeID");
 
@@ -108,13 +118,10 @@ public class SSLTest {
 
 	@Test
 	public void testMutualSSL() throws Exception {
-
-		Security.addProvider(new BeIDProvider());
-
 		final KeyPair serverKeyPair = generateKeyPair();
 		final PrivateKey serverPrivateKey = serverKeyPair.getPrivate();
-		final DateTime notBefore = new DateTime();
-		final DateTime notAfter = notBefore.plusDays(1);
+		final LocalDateTime notBefore = LocalDateTime.now();
+		final LocalDateTime notAfter = notBefore.plusDays(1);
 		final X509Certificate serverCertificate = generateCACertificate(serverKeyPair, "CN=Test", notBefore, notAfter);
 
 		final KeyManager keyManager = new ServerTestX509KeyManager(serverPrivateKey, serverCertificate);
@@ -283,7 +290,7 @@ public class SSLTest {
 		@Override
 		public X509Certificate[] getCertificateChain(final String alias) {
 			LOGGER.debug("getCertificateChain: {}", alias);
-			if (false == alias.equals("test-server")) {
+			if (!alias.equals("test-server")) {
 				return null;
 			}
 			return new X509Certificate[] { this.serverCertificate };
@@ -298,7 +305,7 @@ public class SSLTest {
 		@Override
 		public PrivateKey getPrivateKey(final String alias) {
 			LOGGER.debug("getPrivateKey: {}", alias);
-			if (false == alias.equals("test-server")) {
+			if (!alias.equals("test-server")) {
 				return null;
 			}
 			return this.serverPrivateKey;
@@ -315,12 +322,11 @@ public class SSLTest {
 		final KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
 		final SecureRandom random = new SecureRandom();
 		keyPairGenerator.initialize(new RSAKeyGenParameterSpec(1024, RSAKeyGenParameterSpec.F4), random);
-		final KeyPair keyPair = keyPairGenerator.generateKeyPair();
-		return keyPair;
+		return keyPairGenerator.generateKeyPair();
 	}
 
-	private X509Certificate generateCACertificate(final KeyPair keyPair, final String subject, final DateTime notBefore,
-			final DateTime notAfter) throws Exception {
+	private X509Certificate generateCACertificate(final KeyPair keyPair, final String subject,
+			final LocalDateTime notBefore, final LocalDateTime notAfter) throws Exception {
 		LOGGER.debug("generate CA certificate: " + subject);
 
 		final X500Name issuer = new X500Name(subject);
@@ -334,7 +340,8 @@ public class SSLTest {
 		final BigInteger serial = new BigInteger(serialValue);
 
 		final X509v3CertificateBuilder x509v3CertificateBuilder = new X509v3CertificateBuilder(issuer, serial,
-				notBefore.toDate(), notAfter.toDate(), subjectX500Name, publicKeyInfo);
+				Date.from(notBefore.atZone(ZoneId.systemDefault()).toInstant()),
+				Date.from(notAfter.atZone(ZoneId.systemDefault()).toInstant()), subjectX500Name, publicKeyInfo);
 
 		try {
 			final JcaX509ExtensionUtils extensionUtils = new JcaX509ExtensionUtils();
@@ -351,7 +358,7 @@ public class SSLTest {
 
 			x509v3CertificateBuilder.addExtension(Extension.basicConstraints, true, new BasicConstraints(2147483647));
 
-		} catch (final Exception e) {
+		} catch (final NoSuchAlgorithmException | CertIOException e) {
 			throw new RuntimeException(e);
 		}
 

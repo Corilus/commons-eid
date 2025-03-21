@@ -1,6 +1,7 @@
 /*
  * Commons eID Project.
  * Copyright (C) 2008-2013 FedICT.
+ * Copyright (C) 2024 e-Contract.be BV.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version
@@ -20,10 +21,11 @@ package be.fedict.commons.eid.examples.events;
 
 import java.io.IOException;
 import java.util.Set;
+
 import javax.smartcardio.CardException;
+
 import be.fedict.commons.eid.client.BeIDCard;
 import be.fedict.commons.eid.client.BeIDCards;
-import be.fedict.commons.eid.client.BeIDCardsException;
 import be.fedict.commons.eid.client.CancelledException;
 import be.fedict.commons.eid.client.FileType;
 import be.fedict.commons.eid.consumer.Identity;
@@ -80,10 +82,8 @@ public class BeIDCardsExample {
 
 	}
 
-	public static void main(final String[] args) throws InterruptedException,
-			BeIDCardsException {
+	public static void main(final String[] args) throws InterruptedException {
 		final BeIDCardsExample examples = new BeIDCardsExample();
 		examples.demonstrate();
 	}
-
 }

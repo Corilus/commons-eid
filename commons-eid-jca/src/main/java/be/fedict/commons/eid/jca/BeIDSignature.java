@@ -1,7 +1,7 @@
 /*
  * Commons eID Project.
  * Copyright (C) 2008-2013 FedICT.
- * Copyright (C) 2017 e-Contract.be BVBA.
+ * Copyright (C) 2017-2024 e-Contract.be BV.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version
@@ -35,6 +35,8 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import be.fedict.commons.eid.client.impl.BeIDDigest;
+
 /**
  * eID based JCA {@link Signature} implementation. Supports the following
  * signature algorithms:
@@ -44,16 +46,39 @@ import org.slf4j.LoggerFactory;
  * <li><code>SHA256withRSA</code></li>
  * <li><code>SHA384withRSA</code></li>
  * <li><code>SHA512withRSA</code></li>
+ * <li><code>SHA3-256withRSA</code></li>
+ * <li><code>SHA3-384withRSA</code></li>
+ * <li><code>SHA3-512withRSA</code></li>
  * <li><code>NONEwithRSA</code>, used for mutual TLS authentication.</li>
  * <li><code>RIPEMD128withRSA</code></li>
  * <li><code>RIPEMD160withRSA</code></li>
  * <li><code>RIPEMD256withRSA</code></li>
  * <li><code>SHA1withRSAandMGF1</code>, supported by recent eID cards.</li>
  * <li><code>SHA256withRSAandMGF1</code>, supported by recent eID cards.</li>
+ * <li><code>SHA256withECDSA</code>, supported by eID version 1.8 cards.</li>
+ * <li><code>SHA384withECDSA</code>, supported by eID version 1.8 cards.</li>
+ * <li><code>SHA512withECDSA</code>, supported by eID version 1.8 cards.</li>
+ * <li><code>SHA3-256withECDSA</code>, supported by eID version 1.8 cards.</li>
+ * <li><code>SHA3-384withECDSA</code>, supported by eID version 1.8 cards.</li>
+ * <li><code>SHA3-512withECDSA</code>, supported by eID version 1.8 cards.</li>
+ * <li><code>SHA256withECDSAinP1363Format</code>, supported by eID version 1.8
+ * cards.</li>
+ * <li><code>SHA384withECDSAinP1363Format</code>, supported by eID version 1.8
+ * cards.</li>
+ * <li><code>SHA512withECDSAinP1363Format</code>, supported by eID version 1.8
+ * cards.</li>
+ * <li><code>SHA3-256withECDSAinP1363Format</code>, supported by eID version 1.8
+ * cards.</li>
+ * <li><code>SHA3-384withECDSAinP1363Format</code>, supported by eID version 1.8
+ * cards.</li>
+ * <li><code>SHA3-512withECDSAinP1363Format</code>, supported by eID version 1.8
+ * cards.</li>
+ * <li><code>NONEwithECDSA</code>, supported by eID version 1.8 cards, used for
+ * mutual TLS authentication.</li>
  * </ul>
- * <p/>
- * Some of the more exotic digest algorithms like SHA-224 and RIPEMDxxx will
- * require an additional security provider like BouncyCastle.
+ *
+ * Some of the more exotic digest algorithms like SHA-224, RIPEMDxxx, and SHA3
+ * might require an additional security provider like BouncyCastle.
  * 
  * @author Frank Cornelis
  * 
@@ -62,11 +87,11 @@ public class BeIDSignature extends SignatureSpi {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(BeIDSignature.class);
 
-	private final static Map<String, String> digestAlgos;
+	private final static Map<String, BeIDDigest> digestAlgos;
 
 	private final MessageDigest messageDigest;
 
-	private BeIDPrivateKey privateKey;
+	private AbstractBeIDPrivateKey privateKey;
 
 	private Signature verifySignature;
 
@@ -75,28 +100,45 @@ public class BeIDSignature extends SignatureSpi {
 	private final ByteArrayOutputStream precomputedDigestOutputStream;
 
 	static {
-		digestAlgos = new HashMap<String, String>();
-		digestAlgos.put("SHA1withRSA", "SHA-1");
-		digestAlgos.put("SHA224withRSA", "SHA-224");
-		digestAlgos.put("SHA256withRSA", "SHA-256");
-		digestAlgos.put("SHA384withRSA", "SHA-384");
-		digestAlgos.put("SHA512withRSA", "SHA-512");
-		digestAlgos.put("NONEwithRSA", null);
-		digestAlgos.put("RIPEMD128withRSA", "RIPEMD128");
-		digestAlgos.put("RIPEMD160withRSA", "RIPEMD160");
-		digestAlgos.put("RIPEMD256withRSA", "RIPEMD256");
-		digestAlgos.put("SHA1withRSAandMGF1", "SHA-1");
-		digestAlgos.put("SHA256withRSAandMGF1", "SHA-256");
+		digestAlgos = new HashMap<>();
+		digestAlgos.put("SHA1withRSA", BeIDDigest.SHA_1);
+		digestAlgos.put("SHA224withRSA", BeIDDigest.SHA_224);
+		digestAlgos.put("SHA256withRSA", BeIDDigest.SHA_256);
+		digestAlgos.put("SHA384withRSA", BeIDDigest.SHA_384);
+		digestAlgos.put("SHA512withRSA", BeIDDigest.SHA_512);
+		digestAlgos.put("NONEwithRSA", BeIDDigest.NONE);
+		digestAlgos.put("RIPEMD128withRSA", BeIDDigest.RIPEMD_128);
+		digestAlgos.put("RIPEMD160withRSA", BeIDDigest.RIPEMD_160);
+		digestAlgos.put("RIPEMD256withRSA", BeIDDigest.RIPEMD_256);
+		digestAlgos.put("SHA1withRSAandMGF1", BeIDDigest.SHA_1_PSS);
+		digestAlgos.put("SHA256withRSAandMGF1", BeIDDigest.SHA_256_PSS);
+		digestAlgos.put("SHA256withECDSA", BeIDDigest.ECDSA_SHA_2_256);
+		digestAlgos.put("SHA384withECDSA", BeIDDigest.ECDSA_SHA_2_384);
+		digestAlgos.put("SHA512withECDSA", BeIDDigest.ECDSA_SHA_2_512);
+		digestAlgos.put("SHA3-256withECDSA", BeIDDigest.ECDSA_SHA_3_256);
+		digestAlgos.put("SHA3-384withECDSA", BeIDDigest.ECDSA_SHA_3_384);
+		digestAlgos.put("SHA3-512withECDSA", BeIDDigest.ECDSA_SHA_3_512);
+		digestAlgos.put("SHA256withECDSAinP1363Format", BeIDDigest.ECDSA_SHA_2_256_P1363);
+		digestAlgos.put("SHA384withECDSAinP1363Format", BeIDDigest.ECDSA_SHA_2_384_P1363);
+		digestAlgos.put("SHA512withECDSAinP1363Format", BeIDDigest.ECDSA_SHA_2_512_P1363);
+		digestAlgos.put("SHA3-256withECDSAinP1363Format", BeIDDigest.ECDSA_SHA_3_256_P1363);
+		digestAlgos.put("SHA3-384withECDSAinP1363Format", BeIDDigest.ECDSA_SHA_3_384_P1363);
+		digestAlgos.put("SHA3-512withECDSAinP1363Format", BeIDDigest.ECDSA_SHA_3_512_P1363);
+		digestAlgos.put("NONEwithECDSA", BeIDDigest.ECDSA_NONE);
+		digestAlgos.put("NONEwithECDSAinP1363Format", BeIDDigest.ECDSA_NONE_P1363);
+		digestAlgos.put("SHA3-256withRSA", BeIDDigest.SHA3_256);
+		digestAlgos.put("SHA3-384withRSA", BeIDDigest.SHA3_384);
+		digestAlgos.put("SHA3-512withRSA", BeIDDigest.SHA3_512);
 	}
 
 	BeIDSignature(final String signatureAlgorithm) throws NoSuchAlgorithmException {
 		LOGGER.debug("constructor: {}", signatureAlgorithm);
 		this.signatureAlgorithm = signatureAlgorithm;
-		if (false == digestAlgos.containsKey(signatureAlgorithm)) {
+		if (!digestAlgos.containsKey(signatureAlgorithm)) {
 			LOGGER.error("no such algo: {}", signatureAlgorithm);
 			throw new NoSuchAlgorithmException(signatureAlgorithm);
 		}
-		final String digestAlgo = digestAlgos.get(signatureAlgorithm);
+		final String digestAlgo = digestAlgos.get(signatureAlgorithm).getAlgorithm();
 		if (null != digestAlgo) {
 			this.messageDigest = MessageDigest.getInstance(digestAlgo);
 			this.precomputedDigestOutputStream = null;
@@ -109,7 +151,7 @@ public class BeIDSignature extends SignatureSpi {
 
 	@Override
 	protected void engineInitVerify(final PublicKey publicKey) throws InvalidKeyException {
-		LOGGER.debug("engineInitVerify");
+		LOGGER.debug("engineInitVerify: {}", publicKey.getClass().getName());
 		if (null == this.verifySignature) {
 			try {
 				this.verifySignature = Signature.getInstance(this.signatureAlgorithm);
@@ -123,10 +165,10 @@ public class BeIDSignature extends SignatureSpi {
 	@Override
 	protected void engineInitSign(final PrivateKey privateKey) throws InvalidKeyException {
 		LOGGER.debug("engineInitSign");
-		if (false == privateKey instanceof BeIDPrivateKey) {
+		if (!(privateKey instanceof AbstractBeIDPrivateKey)) {
 			throw new InvalidKeyException();
 		}
-		this.privateKey = (BeIDPrivateKey) privateKey;
+		this.privateKey = (AbstractBeIDPrivateKey) privateKey;
 		if (null != this.messageDigest) {
 			this.messageDigest.reset();
 		}
@@ -157,20 +199,15 @@ public class BeIDSignature extends SignatureSpi {
 	protected byte[] engineSign() throws SignatureException {
 		LOGGER.debug("engineSign");
 		final byte[] digestValue;
-		String digestAlgo;
 		if (null != this.messageDigest) {
 			digestValue = this.messageDigest.digest();
-			digestAlgo = this.messageDigest.getAlgorithm();
-			if (this.signatureAlgorithm.endsWith("andMGF1")) {
-				digestAlgo += "-PSS";
-			}
 		} else if (null != this.precomputedDigestOutputStream) {
 			digestValue = this.precomputedDigestOutputStream.toByteArray();
-			digestAlgo = "NONE";
 		} else {
 			throw new SignatureException();
 		}
-		return this.privateKey.sign(digestValue, digestAlgo);
+		BeIDDigest beidDigest = digestAlgos.get(this.signatureAlgorithm);
+		return this.privateKey.sign(digestValue, beidDigest);
 	}
 
 	@Override
@@ -179,8 +216,7 @@ public class BeIDSignature extends SignatureSpi {
 		if (null == this.verifySignature) {
 			throw new SignatureException("initVerify required");
 		}
-		final boolean result = this.verifySignature.verify(sigBytes);
-		return result;
+		return this.verifySignature.verify(sigBytes);
 	}
 
 	@Override

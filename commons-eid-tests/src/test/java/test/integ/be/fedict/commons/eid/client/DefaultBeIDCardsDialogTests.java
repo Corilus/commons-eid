@@ -1,6 +1,7 @@
 /*
  * Commons eID Project.
  * Copyright (C) 2008-2013 FedICT.
+ * Copyright (C) 2020 e-Contract.be BV.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version
@@ -33,30 +34,31 @@ import java.util.List;
 
 import javax.smartcardio.ATR;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import test.integ.be.fedict.commons.eid.client.simulation.SimulatedCard;
 import be.fedict.commons.eid.client.BeIDCard;
 import be.fedict.commons.eid.client.BeIDCards;
 import be.fedict.commons.eid.client.FileType;
+import be.fedict.commons.eid.client.PINPurpose;
+import be.fedict.commons.eid.client.spi.BeIDCardUI;
 import be.fedict.commons.eid.client.spi.BeIDCardsUI;
 import be.fedict.commons.eid.consumer.Identity;
 import be.fedict.commons.eid.consumer.tlv.TlvParser;
+import be.fedict.commons.eid.dialogs.DefaultBeIDCardUI;
 import be.fedict.commons.eid.dialogs.DefaultBeIDCardsUI;
+import test.integ.be.fedict.commons.eid.client.simulation.SimulatedCard;
 
 public class DefaultBeIDCardsDialogTests {
 	private static final int numberOfCards = 3;
 	private List<BeIDCard> simulatedBeIDCards;
 
-	@Before
+	@BeforeEach
 	public void setUp() {
-		this.simulatedBeIDCards = new ArrayList<BeIDCard>(numberOfCards);
+		this.simulatedBeIDCards = new ArrayList<>(numberOfCards);
 		for (int i = 0; i < numberOfCards; i++) {
-			this.simulatedBeIDCards.add(new BeIDCard(new SimulatedCard(new ATR(
-					new byte[]{0x3b, (byte) 0x98, (byte) i, 0x40, (byte) i,
-							(byte) i, (byte) i, (byte) i, 0x01, 0x01,
-							(byte) 0xad, 0x13, 0x10}))));
+			this.simulatedBeIDCards.add(new BeIDCard(new SimulatedCard(new ATR(new byte[] { 0x3b, (byte) 0x98, (byte) i,
+					0x40, (byte) i, (byte) i, (byte) i, (byte) i, 0x01, 0x01, (byte) 0xad, 0x13, 0x10 }))));
 		}
 	}
 
@@ -71,7 +73,13 @@ public class DefaultBeIDCardsDialogTests {
 		final BeIDCard card = new BeIDCards().getOneBeIDCard();
 		final byte[] identityData = card.readFile(FileType.Identity);
 		final Identity identity = TlvParser.parse(identityData, Identity.class);
-		System.out.println("chose " + identity.getName() + ", "
-				+ identity.getFirstName() + " " + identity.getMiddleName());
+		System.out.println(
+				"chose " + identity.getName() + ", " + identity.getFirstName() + " " + identity.getMiddleName());
+	}
+
+	@Test
+	public void testPinDialog() throws Exception {
+		final BeIDCardUI ui = new DefaultBeIDCardUI();
+		ui.obtainPIN(3, PINPurpose.AuthenticationSignature, "Test");
 	}
 }
