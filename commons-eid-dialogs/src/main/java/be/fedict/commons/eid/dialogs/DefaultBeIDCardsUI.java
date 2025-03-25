@@ -1,7 +1,7 @@
 /*
  * Commons eID Project.
  * Copyright (C) 2008-2013 FedICT.
- * Copyright (C) 2009 e-Contract.be BVBA.
+ * Copyright (C) 2009-2024 e-Contract.be BV.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version
@@ -20,8 +20,6 @@
 package be.fedict.commons.eid.dialogs;
 
 import java.awt.Component;
-import java.awt.DisplayMode;
-import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.Insets;
 import java.util.Collection;
@@ -45,7 +43,7 @@ import be.fedict.commons.eid.client.spi.BeIDCardsUI;
  * 
  */
 public class DefaultBeIDCardsUI implements BeIDCardsUI {
-	private Component parentComponent;
+	private final Component parentComponent;
 	private Messages messages;
 	private JFrame adviseFrame;
 	private BeIDSelector selectionDialog;
@@ -59,8 +57,7 @@ public class DefaultBeIDCardsUI implements BeIDCardsUI {
 		this(parentComponent, null);
 	}
 
-	public DefaultBeIDCardsUI(final Component parentComponent,
-			final Messages messages) {
+	public DefaultBeIDCardsUI(final Component parentComponent, final Messages messages) {
 		this.parentComponent = parentComponent;
 		this.messages = messages;
 		if (GraphicsEnvironment.isHeadless()) {
@@ -78,18 +75,14 @@ public class DefaultBeIDCardsUI implements BeIDCardsUI {
 
 	@Override
 	public void adviseCardTerminalRequired() {
-		showAdvise(
-				this.messages.getMessage(Messages.MESSAGE_ID.CONNECT_READER),
+		showAdvise(this.messages.getMessage(Messages.MESSAGE_ID.CONNECT_READER),
 				this.messages.getMessage(Messages.MESSAGE_ID.CONNECT_READER));
 	}
 
 	@Override
 	public void adviseBeIDCardRequired() {
-		showAdvise(
-				this.messages
-						.getMessage(Messages.MESSAGE_ID.INSERT_CARD_QUESTION),
-				this.messages
-						.getMessage(Messages.MESSAGE_ID.INSERT_CARD_QUESTION));
+		showAdvise(this.messages.getMessage(Messages.MESSAGE_ID.INSERT_CARD_QUESTION),
+				this.messages.getMessage(Messages.MESSAGE_ID.INSERT_CARD_QUESTION));
 	}
 
 	@Override
@@ -103,8 +96,7 @@ public class DefaultBeIDCardsUI implements BeIDCardsUI {
 	public BeIDCard selectBeIDCard(final Collection<BeIDCard> availableCards)
 			throws CancelledException, OutOfCardsException {
 		try {
-			this.selectionDialog = new BeIDSelector(this.parentComponent,
-					"Select eID card", availableCards);
+			this.selectionDialog = new BeIDSelector(this.parentComponent, "Select eID card", availableCards);
 			return this.selectionDialog.choose();
 		} finally {
 			this.selectionDialog = null;
@@ -118,10 +110,6 @@ public class DefaultBeIDCardsUI implements BeIDCardsUI {
 			this.adviseFrame = null;
 		}
 	}
-
-	/*
-	 * **********************************************************************************************************************
-	 */
 
 	private void showAdvise(final String title, final String message) {
 		if (null != this.adviseFrame) {
@@ -146,21 +134,7 @@ public class DefaultBeIDCardsUI implements BeIDCardsUI {
 		this.adviseFrame.getContentPane().add(panel);
 		this.adviseFrame.pack();
 
-		if (this.parentComponent != null) {
-			this.adviseFrame.setLocationRelativeTo(this.parentComponent);
-		} else {
-			GraphicsEnvironment graphicsEnvironment = GraphicsEnvironment
-					.getLocalGraphicsEnvironment();
-			GraphicsDevice graphicsDevice = graphicsEnvironment
-					.getDefaultScreenDevice();
-			DisplayMode displayMode = graphicsDevice.getDisplayMode();
-			int screenWidth = displayMode.getWidth();
-			int screenHeight = displayMode.getHeight();
-			int dialogWidth = this.adviseFrame.getWidth();
-			int dialogHeight = this.adviseFrame.getHeight();
-			this.adviseFrame.setLocation((screenWidth - dialogWidth) / 2,
-					(screenHeight - dialogHeight) / 2);
-		}
+		this.adviseFrame.setLocationRelativeTo(this.parentComponent);
 
 		this.adviseFrame.setVisible(true);
 	}
@@ -193,5 +167,4 @@ public class DefaultBeIDCardsUI implements BeIDCardsUI {
 		}
 		return LocaleManager.getLocale();
 	}
-
 }

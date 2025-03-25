@@ -1,14 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
-		<groupId>be.fedict</groupId>
+		<groupId>be.corilus</groupId>
 		<artifactId>commons-eid</artifactId>
-		<version>0.7.0-SNAPSHOT</version>
+		<version>${revision}.${sha1}</version>
 	</parent>
 	<name>Commons eID Integration Tests</name>
-	<groupId>be.fedict.commons-eid</groupId>
+	<groupId>be.corilus.commons-eid</groupId>
 	<artifactId>commons-eid-tests</artifactId>
 	<description>Integration tests for the Commons eID project</description>
 	<build>
@@ -17,7 +16,7 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<configuration>
-					<skip>true</skip>
+					<skipTests>true</skipTests>
 				</configuration>
 			</plugin>
 		</plugins>
@@ -31,7 +30,7 @@
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-surefire-plugin</artifactId>
 						<configuration>
-							<skip>false</skip>
+							<skipTests>false</skipTests>
 						</configuration>
 					</plugin>
 				</plugins>
@@ -41,7 +40,7 @@
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
-				<groupId>be.fedict.commons-eid</groupId>
+				<groupId>be.corilus.commons-eid</groupId>
 				<artifactId>commons-eid-bom</artifactId>
 				<version>${project.version}</version>
 				<type>pom</type>
@@ -51,24 +50,24 @@
 	</dependencyManagement>
 	<dependencies>
 		<dependency>
-			<groupId>be.fedict.commons-eid</groupId>
+			<groupId>be.corilus.commons-eid</groupId>
 			<artifactId>commons-eid-client</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>be.fedict.commons-eid</groupId>
+			<groupId>be.corilus.commons-eid</groupId>
 			<artifactId>commons-eid-consumer</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>be.fedict.commons-eid</groupId>
+			<groupId>be.corilus.commons-eid</groupId>
 			<artifactId>commons-eid-dialogs</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>be.fedict.commons-eid</groupId>
+			<groupId>be.corilus.commons-eid</groupId>
 			<artifactId>commons-eid-jca</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-engine</artifactId>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -82,28 +81,23 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-log4j12</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>log4j</groupId>
-			<artifactId>log4j</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>joda-time</groupId>
-			<artifactId>joda-time</artifactId>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-slf4j2-impl</artifactId>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.bouncycastle</groupId>
-			<artifactId>bcprov-jdk15on</artifactId>
+			<artifactId>bcprov-jdk18on</artifactId>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.bouncycastle</groupId>
-			<artifactId>bcpkix-jdk15on</artifactId>
+			<artifactId>bcpkix-jdk18on</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>commons-codec</groupId>
+			<artifactId>commons-codec</artifactId>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>

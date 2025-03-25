@@ -1,7 +1,7 @@
 /*
  * Commons eID Project.
  * Copyright (C) 2008-2013 FedICT.
- * Copyright (C) 2017 e-Contract.be BVBA.
+ * Copyright (C) 2017-2023 e-Contract.be BV.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version
@@ -16,7 +16,6 @@
  * License along with this software; if not, see 
  * http://www.gnu.org/licenses/.
  */
-
 package be.fedict.commons.eid.jca;
 
 import java.security.KeyStore;
@@ -32,26 +31,28 @@ import javax.net.ssl.KeyManagerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import be.fedict.commons.eid.jca.ssl.BeIDKeyManagerFactory;
+
 /**
  * The JCA security provider. Provides an eID based {@link KeyStore},
  * {@link Signature}, {@link KeyManagerFactory}, and {@link SecureRandom}.
  * <p/>
  * Usage:
- * 
+ *
  * <pre>
  * import java.security.Security;
  * import be.fedict.commons.eid.jca.BeIDProvider;
- * 
+ *
  * ...
  * Security.addProvider(new BeIDProvider());
  * </pre>
- * 
+ *
  * @see BeIDKeyStore
  * @see BeIDSignature
  * @see BeIDKeyManagerFactory
  * @see BeIDSecureRandom
  * @author Frank Cornelis
- * 
+ *
  */
 public class BeIDProvider extends Provider {
 
@@ -66,8 +67,12 @@ public class BeIDProvider extends Provider {
 
 		putService(new BeIDService(this, "KeyStore", "BeID", BeIDKeyStore.class.getName()));
 
-		final Map<String, String> signatureServiceAttributes = new HashMap<String, String>();
-		signatureServiceAttributes.put("SupportedKeyClasses", BeIDPrivateKey.class.getName());
+		final Map<String, String> signatureServiceAttributes = new HashMap<>();
+		signatureServiceAttributes.put("SupportedKeyClasses",
+				BeIDPrivateKey.class.getName() + "|" + BeIDECPrivateKey.class.getName());
+		signatureServiceAttributes.put("Signature.SHA256withECDSA ImplementedIn", "Hardware");
+		signatureServiceAttributes.put("Signature.SHA384withECDSA ImplementedIn", "Hardware");
+		signatureServiceAttributes.put("Signature.SHA512withECDSA ImplementedIn", "Hardware");
 		putService(new BeIDService(this, "Signature", "SHA1withRSA", BeIDSignature.class.getName(),
 				signatureServiceAttributes));
 		putService(new BeIDService(this, "Signature", "SHA224withRSA", BeIDSignature.class.getName(),
@@ -90,6 +95,40 @@ public class BeIDProvider extends Provider {
 				signatureServiceAttributes));
 		putService(new BeIDService(this, "Signature", "SHA256withRSAandMGF1", BeIDSignature.class.getName(),
 				signatureServiceAttributes));
+		putService(new BeIDService(this, "Signature", "SHA256withECDSA", BeIDSignature.class.getName(),
+				signatureServiceAttributes));
+		putService(new BeIDService(this, "Signature", "SHA384withECDSA", BeIDSignature.class.getName(),
+				signatureServiceAttributes));
+		putService(new BeIDService(this, "Signature", "SHA512withECDSA", BeIDSignature.class.getName(),
+				signatureServiceAttributes));
+		putService(new BeIDService(this, "Signature", "SHA3-256withECDSA", BeIDSignature.class.getName(),
+				signatureServiceAttributes));
+		putService(new BeIDService(this, "Signature", "SHA3-384withECDSA", BeIDSignature.class.getName(),
+				signatureServiceAttributes));
+		putService(new BeIDService(this, "Signature", "SHA3-512withECDSA", BeIDSignature.class.getName(),
+				signatureServiceAttributes));
+		putService(new BeIDService(this, "Signature", "NONEwithECDSA", BeIDSignature.class.getName(),
+				signatureServiceAttributes));
+		putService(new BeIDService(this, "Signature", "NONEwithECDSAinP1363Format", BeIDSignature.class.getName(),
+				signatureServiceAttributes));
+		putService(new BeIDService(this, "Signature", "SHA3-256withRSA", BeIDSignature.class.getName(),
+				signatureServiceAttributes));
+		putService(new BeIDService(this, "Signature", "SHA3-384withRSA", BeIDSignature.class.getName(),
+				signatureServiceAttributes));
+		putService(new BeIDService(this, "Signature", "SHA3-512withRSA", BeIDSignature.class.getName(),
+				signatureServiceAttributes));
+		putService(new BeIDService(this, "Signature", "SHA256withECDSAinP1363Format", BeIDSignature.class.getName(),
+				signatureServiceAttributes));
+		putService(new BeIDService(this, "Signature", "SHA384withECDSAinP1363Format", BeIDSignature.class.getName(),
+				signatureServiceAttributes));
+		putService(new BeIDService(this, "Signature", "SHA512withECDSAinP1363Format", BeIDSignature.class.getName(),
+				signatureServiceAttributes));
+		putService(new BeIDService(this, "Signature", "SHA3-256withECDSAinP1363Format", BeIDSignature.class.getName(),
+				signatureServiceAttributes));
+		putService(new BeIDService(this, "Signature", "SHA3-384withECDSAinP1363Format", BeIDSignature.class.getName(),
+				signatureServiceAttributes));
+		putService(new BeIDService(this, "Signature", "SHA3-512withECDSAinP1363Format", BeIDSignature.class.getName(),
+				signatureServiceAttributes));
 
 		putService(new BeIDService(this, "KeyManagerFactory", "BeID", BeIDKeyManagerFactory.class.getName()));
 
@@ -98,9 +137,9 @@ public class BeIDProvider extends Provider {
 
 	/**
 	 * Inner class used by {@link BeIDProvider}.
-	 * 
+	 *
 	 * @author Frank Cornelis
-	 * 
+	 *
 	 */
 	private static final class BeIDService extends Service {
 
@@ -124,8 +163,9 @@ public class BeIDProvider extends Provider {
 
 		@Override
 		public boolean supportsParameter(final Object parameter) {
-			LOGGER.debug("supportedParameter: {}", parameter);
-			return super.supportsParameter(parameter);
+			boolean supportsParameter = super.supportsParameter(parameter);
+			LOGGER.debug("supportsParameter: {} for algo {} = {}", parameter, getAlgorithm(), supportsParameter);
+			return supportsParameter;
 		}
 	}
 }

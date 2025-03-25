@@ -13,13 +13,27 @@ Commons eID JCA
 * Creating a signature
 
   Creating a signature using the Commons eID JCA provider is as easy as it can get.
+  
+  Given the new Belpic version 1.8 eID cards, you always need to determine the key algorithm supported by the eID card.
+  Depending on the key algorithm, you select either RSA or ECDSA as signature algorithm as shown in the following example.
 
 +---
-Security.addProvider(new BeIDProvider());
+Security.insertProviderAt(new BeIDProvider(), 1);
 KeyStore keyStore = KeyStore.getInstance("BeID");
-keyStore.init(null);
+keyStore.load(null);
 PrivateKey authnPrivateKey = (PrivateKey) keyStore.getKey("Authentication", null);
-Signature signature = Signature.getInstance("SHA1withRSA");
+String signatureAlgorithm;
+switch (authnPrivateKey.getAlgorithm()) {
+case "RSA":
+	signatureAlgorithm = "SHA256withRSA";
+	break;
+case "EC":
+	signatureAlgorithm = "SHA256withECDSA";
+	break;
+default:
+	throw new IllegalStateException("unsupported key algo");
+}
+Signature signature = Signature.getInstance(signatureAlgorithm);
 signature.initSign(authnPrivateKey);
 byte[] toBeSigned = "hello world".getBytes();
 signature.update(toBeSigned);
@@ -38,6 +52,12 @@ byte[] signatureValue = signature.sign();
   
   * <<<SHA512withRSA>>>
   
+  * <<<SHA3-256withRSA>>>
+  
+  * <<<SHA3-384withRSA>>>
+  
+  * <<<SHA3-512withRSA>>>
+  
   * <<<NONEwithRSA>>> (for SSL)
   
   * <<<RIPEMD128withRSA>>>
@@ -50,13 +70,41 @@ byte[] signatureValue = signature.sign();
   
   * <<<SHA256withRSAandMGF1>>> (recent eID cards only)
   
+  * <<<SHA256withECDSA>>> (eID version 1.8 cards only)
+  
+  * <<<SHA384withECDSA>>> (eID version 1.8 cards only)
+  
+  * <<<SHA512withECDSA>>> (eID version 1.8 cards only)
+  
+  * <<<SHA3-256withECDSA>>> (eID version 1.8 cards only)
+  
+  * <<<SHA3-384withECDSA>>> (eID version 1.8 cards only)
+  
+  * <<<SHA3-512withECDSA>>> (eID version 1.8 cards only)
+
+  * <<<SHA256withECDSAinP1363Format>>> (eID version 1.8 cards only)
+  
+  * <<<SHA384withECDSAinP1363Format>>> (eID version 1.8 cards only)
+  
+  * <<<SHA512withECDSAinP1363Format>>> (eID version 1.8 cards only)
+  
+  * <<<SHA3-256withECDSAinP1363Format>>> (eID version 1.8 cards only)
+  
+  * <<<SHA3-384withECDSAinP1363Format>>> (eID version 1.8 cards only)
+  
+  * <<<SHA3-512withECDSAinP1363Format>>> (eID version 1.8 cards only)
+  
+  * <<<NONEwithECDSA>>> (eID version 1.8 cards only)
+
+  * <<<NONEwithECDSAinP1363Format>>> (eID version 1.8 cards only)
+  
 
 * Retrieving a certificate chain
 
 +---
 Security.addProvider(new BeIDProvider());
 KeyStore keyStore = KeyStore.getInstance("BeID");
-keyStore.init(null);
+keyStore.load(null);
 Certificate[] certificateChain = keyStore.getCertificateChain("Signature");
 +---
 
@@ -70,7 +118,7 @@ Certificate[] certificateChain = keyStore.getCertificateChain("Signature");
   The following example demonstrates how to activate this automatic recovery mechanism:
   
 +---
-Security.addProvider(new BeIDProvider());
+Security.insertProviderAt(new BeIDProvider(), 1);
 KeyStore keyStore = KeyStore.getInstance("BeID");
 BeIDKeyStoreParameter keyStoreParameter = new BeIDKeyStoreParameter();
 keyStoreParameter.setAutoRecovery(true);
@@ -86,7 +134,7 @@ PrivateKey authnPrivateKey = (PrivateKey) keyStore.getKey("Authentication", null
   The following example demonstrates how to activate both card reader stickiness and automatic recovery:
 
 +---
-Security.addProvider(new BeIDProvider());
+Security.insertProviderAt(new BeIDProvider(), 1);
 KeyStore keyStore = KeyStore.getInstance("BeID");
 BeIDKeyStoreParameter keyStoreParameter = new BeIDKeyStoreParameter();
 keyStoreParameter.setAutoRecovery(true);
@@ -104,7 +152,7 @@ PrivateKey authnPrivateKey = (PrivateKey) keyStore.getKey("Authentication", null
   The following example demonstrates how to use the <<<KeyManagerFactory>>> with a configuration that features both card reader stickiness and automatic recovery:
 
 +---
-Security.addProvider(new BeIDProvider());
+Security.insertProviderAt(new BeIDProvider(), 1);
 KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("BeID");
 BeIDManagerFactoryParameters spec = new BeIDManagerFactoryParameters();
 spec.setAutoRecovery(true);
