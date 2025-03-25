@@ -7,11 +7,6 @@
 	<artifactId>commons-eid-bom</artifactId>
 	<packaging>pom</packaging>
 	<version>${revision}.${sha1}</version>
-	<parent>
-		<groupId>be.corilus</groupId>
-		<artifactId>commons-eid</artifactId>
-		<version>${revision}.${sha1}</version>
-	</parent>
 	<distributionManagement>
 		<repository>
 			<id>common-components-releases</id>
@@ -55,8 +50,31 @@
 					<artifactId>maven-site-plugin</artifactId>
 					<version>3.12.1</version>
 				</plugin>
+				<plugin>
+					<groupId>org.codehaus.mojo</groupId>
+					<artifactId>flatten-maven-plugin</artifactId>
+					<version>${flatten-maven-plugin.version}</version>
+					<configuration>
+						<updatePomFile>true</updatePomFile>
+					</configuration>
+				</plugin>
 			</plugins>
 		</pluginManagement>
+		<plugins>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>flatten-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>flatten</id>
+						<goals>
+							<goal>flatten</goal>
+						</goals>
+						<phase>process-resources</phase>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
 		<extensions>
 			<extension>
 				<groupId>org.apache.maven.wagon</groupId>
@@ -89,4 +107,9 @@
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
+	<properties>
+		<flatten-maven-plugin.version>1.7.0</flatten-maven-plugin.version>
+		<revision>1.0</revision>
+		<sha1>0-SNAPSHOT</sha1>
+	</properties>
 </project>

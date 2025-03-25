@@ -296,5 +296,6 @@
 		<slf4j.version>2.0.12</slf4j.version>
 		<revision>1.0</revision>
 		<sha1>0-SNAPSHOT</sha1>
+		<flatten-maven-plugin.version>1.7.0</flatten-maven-plugin.version>
 	</properties>
 </project>
