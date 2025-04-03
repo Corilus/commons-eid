@@ -1,6 +1,7 @@
 /*
  * Commons eID Project.
  * Copyright (C) 2008-2013 FedICT.
+ * Copyright (C) 2020 e-Contract.be BV.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version
@@ -88,12 +89,14 @@ public class CardData implements Serializable {
 	@ByteArrayField(offset = 27, length = 1)
 	public int applicationLifeCycle;
 
+	@ByteArrayField(offset = 28, length = 1)
+	public Integer authPinRemainingAttempts;
+
 	// ----------------------------------------------------------------------
 	/**
-	 * get the complete card serial number "he serial number is composed of 2
-	 * bytes reserved for axalto, 2 bytes identifying the chip manufacturer, and
-	 * 12 bytes identifying uniquely the chip inside all chips from this
-	 * manufacturer."
+	 * get the complete card serial number "he serial number is composed of 2 bytes
+	 * reserved for axalto, 2 bytes identifying the chip manufacturer, and 12 bytes
+	 * identifying uniquely the chip inside all chips from this manufacturer."
 	 * 
 	 * @return the complete 16-byte card serial number
 	 */
@@ -115,8 +118,8 @@ public class CardData implements Serializable {
 	 * get the "2 bytes identifying the chip manufacturer" from the card serial
 	 * number
 	 * 
-	 * @return the value of the 2 bytes identifying the chip manufacturer from
-	 *         the card serial number
+	 * @return the value of the 2 bytes identifying the chip manufacturer from the
+	 *         card serial number
 	 */
 	public int getChipManufacturer() {
 		return this.chipManufacturer;
@@ -126,8 +129,8 @@ public class CardData implements Serializable {
 	 * get the 12 bytes uniquely identifying the chip inside all chips from this
 	 * manufacturer
 	 * 
-	 * @return the 12 bytes uniquely identifying the chip inside all chips from
-	 *         this manufacturer
+	 * @return the 12 bytes uniquely identifying the chip inside all chips from this
+	 *         manufacturer
 	 */
 	public byte[] getChipSerialNumber() {
 		return this.chipSerialNumber;
@@ -188,9 +191,9 @@ public class CardData implements Serializable {
 	}
 
 	/**
-	 * get the 2 "Global OS version" bytes "This global number is unique for a
-	 * given set composed of: Component code || OS number || OS version ||
-	 * Softmask number || Softmask version || Application version"
+	 * get the 2 "Global OS version" bytes "This global number is unique for a given
+	 * set composed of: Component code || OS number || OS version || Softmask number
+	 * || Softmask version || Application version"
 	 * 
 	 * @return the 2 "Global OS version" bytes
 	 */
@@ -225,7 +228,7 @@ public class CardData implements Serializable {
 	 * -- -- -- 1 -- -- -- -- RSA-KEM supported
 	 * 
 	 * Notice that the above is as specified within BELPIC 2.0, which is not in
-	 * production (yet). For now you simply get "21", the PKCS#1 version number.
+	 * production (yet). For now, you simply get "21", the PKCS#1 version number.
 	 * 
 	 * @return the "PKCS#1 support" byte
 	 */
@@ -243,9 +246,9 @@ public class CardData implements Serializable {
 	}
 
 	/**
-	 * get the "Application Life cycle" byte CAUTION: state of 0x0f
-	 * (DEACTIVATED) has been observed in otherwise active cards. It's a bad
-	 * idea to make a functional decision about card state based on this byte.
+	 * get the "Application Life cycle" byte CAUTION: state of 0x0f (DEACTIVATED)
+	 * has been observed in otherwise active cards. It's a bad idea to make a
+	 * functional decision about card state based on this byte.
 	 * 
 	 * @return the "Application Life cycle" byte
 	 */
@@ -265,8 +268,8 @@ public class CardData implements Serializable {
 	}
 
 	/**
-	 * Convenience method to test whether this card supports RSASSA-PSS. BELPIC
-	 * v2.0 only!
+	 * Convenience method to test whether this card supports RSASSA-PSS. BELPIC v2.0
+	 * only!
 	 * 
 	 * @return true if card supports RSASSA-PSS, false otherwise
 	 */
@@ -285,8 +288,8 @@ public class CardData implements Serializable {
 	}
 
 	/**
-	 * Convenience method to test whether this card supports RSAES-OAEP. BELPIC
-	 * v2.0 only!
+	 * Convenience method to test whether this card supports RSAES-OAEP. BELPIC v2.0
+	 * only!
 	 * 
 	 * @return true if card supports RSAES-OAEP, false otherwise
 	 */
@@ -295,8 +298,8 @@ public class CardData implements Serializable {
 	}
 
 	/**
-	 * Convenience method to test whether this card supports RSA-KEM. BELPIC
-	 * v2.0 only!
+	 * Convenience method to test whether this card supports RSA-KEM. BELPIC v2.0
+	 * only!
 	 * 
 	 * @return true if card supports RSA-KEM, false otherwise
 	 */
@@ -308,7 +311,7 @@ public class CardData implements Serializable {
 	 * Convenience method to test whether this card is in the ACTIVATED state.
 	 * CAUTION: state DEACTIVATED has been observed in otherwise active cards.
 	 * 
-	 * @returns true if card is in ACTIVATED state, false otherwise
+	 * @return true if card is in ACTIVATED state, false otherwise
 	 */
 	public boolean isActivated() {
 		return (this.getApplicationLifeCycle() == ACTIVATED);
@@ -318,19 +321,29 @@ public class CardData implements Serializable {
 	 * Convenience method to test whether this card is in the DEACTIVATED state.
 	 * CAUTION: state DEACTIVATED has been observed in otherwise active cards.
 	 * 
-	 * @returns true if card is in DEACTIVATED state, false otherwise
+	 * @return true if card is in DEACTIVATED state, false otherwise
 	 */
 	public boolean isDeactivated() {
 		return (this.getApplicationLifeCycle() == DEACTIVATED);
 	}
 
 	/**
-	 * Convenience method to test whether this card is in the LOCKED state.
-	 * CAUTION: state DEACTIVATED has been observed in otherwise active cards.
+	 * Convenience method to test whether this card is in the LOCKED state. CAUTION:
+	 * state DEACTIVATED has been observed in otherwise active cards.
 	 * 
-	 * @returns true if card is in LOCKED state, false otherwise
+	 * @return true if card is in LOCKED state, false otherwise
 	 */
 	public boolean isLocked() {
 		return (this.getApplicationLifeCycle() == LOCKED);
+	}
+
+	/**
+	 * Returns the number of remaining attempts for the authentication PIN. Only
+	 * available on Belpic applet version 1.8.
+	 * 
+	 * @return
+	 */
+	public Integer getAuthPinRemainingAttempts() {
+		return this.authPinRemainingAttempts;
 	}
 }

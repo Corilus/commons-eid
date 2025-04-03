@@ -1,7 +1,7 @@
 /*
  * Commons eID Project.
  * Copyright (C) 2012-2013 FedICT.
- * Copyright (C) 2017 e-Contract.be BVBA.
+ * Copyright (C) 2017-2024 e-Contract.be BV.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version
@@ -17,7 +17,7 @@
  * http://www.gnu.org/licenses/.
  */
 
-package be.fedict.commons.eid.jca;
+package be.fedict.commons.eid.jca.ssl;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -26,6 +26,7 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.security.PrivateKey;
+import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -35,6 +36,8 @@ import javax.net.ssl.X509ExtendedKeyManager;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import be.fedict.commons.eid.jca.BeIDKeyStoreParameter;
 
 /**
  * eID specific {@link X509ExtendedKeyManager}.
@@ -47,7 +50,7 @@ public class BeIDX509KeyManager extends X509ExtendedKeyManager {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(BeIDX509KeyManager.class);
 
-	private KeyStore keyStore;
+	private final KeyStore keyStore;
 
 	public BeIDX509KeyManager() throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException {
 		this(null);
@@ -76,6 +79,9 @@ public class BeIDX509KeyManager extends X509ExtendedKeyManager {
 		for (String keyType : keyTypes) {
 			LOGGER.debug("key type: {}", keyType);
 			if ("RSA".equals(keyType)) {
+				return "beid";
+			}
+			if ("EC".equals(keyType)) {
 				return "beid";
 			}
 		}
@@ -121,7 +127,7 @@ public class BeIDX509KeyManager extends X509ExtendedKeyManager {
 			PrivateKey privateKey;
 			try {
 				privateKey = (PrivateKey) this.keyStore.getKey("Authentication", null);
-			} catch (final Exception e) {
+			} catch (final KeyStoreException | NoSuchAlgorithmException | UnrecoverableKeyException e) {
 				LOGGER.error("getKey error: " + e.getMessage(), e);
 				return null;
 			}

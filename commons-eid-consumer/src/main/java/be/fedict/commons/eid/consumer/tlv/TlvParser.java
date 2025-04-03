@@ -1,7 +1,7 @@
 /*
  * Commons eID Project.
  * Copyright (C) 2008-2013 FedICT.
- * Copyright (C) 2017 e-Contract.be BVBA.
+ * Copyright (C) 2017-2024 e-Contract.be BV.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version
@@ -21,6 +21,7 @@ package be.fedict.commons.eid.consumer.tlv;
 
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -57,7 +58,8 @@ public class TlvParser {
 		T t;
 		try {
 			t = parseThrowing(file, tlvClass);
-		} catch (final Exception ex) {
+		} catch (final DataConvertorException | UnsupportedEncodingException | IllegalAccessException
+				| InstantiationException ex) {
 			throw new RuntimeException("error parsing file: " + tlvClass.getName(), ex);
 		}
 		return t;
@@ -72,16 +74,16 @@ public class TlvParser {
 	private static <T> T parseThrowing(final byte[] file, final Class<T> tlvClass) throws InstantiationException,
 			IllegalAccessException, DataConvertorException, UnsupportedEncodingException {
 		final Field[] fields = tlvClass.getDeclaredFields();
-		final Map<Integer, List<Field>> tlvFields = new HashMap<Integer, List<Field>>();
+		final Map<Integer, List<Field>> tlvFields = new HashMap<>();
 		final T tlvObject = tlvClass.newInstance();
 		for (Field field : fields) {
 			final TlvField tlvFieldAnnotation = field.getAnnotation(TlvField.class);
 			if (null != tlvFieldAnnotation) {
 				final int tagId = tlvFieldAnnotation.value();
-				List<Field> fieldList = tlvFields.get(new Integer(tagId));
+				List<Field> fieldList = tlvFields.get(tagId);
 				if (fieldList == null) {
-					fieldList = new ArrayList<Field>();
-					tlvFields.put(new Integer(tagId), fieldList);
+					fieldList = new ArrayList<>();
+					tlvFields.put(tagId, fieldList);
 				}
 				fieldList.add(field);
 			}
@@ -120,7 +122,7 @@ public class TlvParser {
 						final DataConvertor<?> dataConvertor = dataConvertorClass.newInstance();
 						fieldValue = dataConvertor.convert(tlvValue);
 					} else if (String.class == tlvType) {
-						fieldValue = new String(tlvValue, "UTF-8");
+						fieldValue = new String(tlvValue, StandardCharsets.UTF_8).trim();
 					} else if (Boolean.TYPE == tlvType) {
 						fieldValue = true;
 					} else if (tlvType.isArray() && Byte.TYPE == tlvType.getComponentType()) {
@@ -128,14 +130,14 @@ public class TlvParser {
 					} else {
 						throw new IllegalArgumentException("unsupported field type: " + tlvType.getName());
 					}
-					if (null != tlvField.get(tlvObject) && false == tlvField.getType().isPrimitive()) {
+					if (null != tlvField.get(tlvObject) && !tlvField.getType().isPrimitive()) {
 						throw new RuntimeException("field was already set: " + tlvField.getName());
 					}
 					tlvField.setAccessible(true);
 					tlvField.set(tlvObject, fieldValue);
 				}
 			} else {
-				LOGGER.debug("unknown tag: {}, length {}", (tag & 0xff), length);
+				LOGGER.warn("unknown tag: {}, length {}", (tag & 0xff), length);
 			}
 			idx += length;
 		}
